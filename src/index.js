@@ -1,5 +1,4 @@
-// Your code here
-const API_URL = 'http://localhost:3001/films';
+const API_URL = 'http://localhost:3000/films';
 const filmsList = document.getElementById('films');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,25 +6,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (placeholder) {
     placeholder.remove();
   }
-  loadFirstFilm(API_URL);
-  loadAllMovies(API_URL);
+  loadAllMovies();
 });
 
-function loadFirstFilm(url) {
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      displayFilmDetails(data[0]);
-    });
-}
-
-function loadAllMovies(url) {
-  fetch(url)
-    .then(response => response.json())
-    .then(movies => {
-      movies.forEach(movie => {
+function loadAllMovies() {
+  fetch(API_URL)
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(movies) {
+      movies.forEach(function(movie) {
         showMovie(movie);
       });
+      if (movies.length > 0) {
+        displayFilmDetails(movies[0]);
+      }
     });
 }
 
@@ -33,17 +28,30 @@ function showMovie(movie) {
   const filmItem = document.createElement('li');
   filmItem.style.cursor = "pointer";
   filmItem.textContent = movie.title.toUpperCase();
+  
+  const deleteButton = document.createElement('button');
+  deleteButton.textContent = 'Delete';
+  deleteButton.style.marginLeft = '10px';
+  
+  deleteButton.addEventListener('click', function(event) {
+    event.stopPropagation();
+    deleteMovie(movie.id, filmItem);
+  });
+
+  filmItem.appendChild(deleteButton);
   filmsList.appendChild(filmItem);
   
-  filmItem.addEventListener('click', () => {
+  filmItem.addEventListener('click', function() {
     fetchFilmDetails(movie.id);
   });
 }
 
 function fetchFilmDetails(movieId) {
-  fetch(`${API_URL}/${movieId}`)
-    .then(response => response.json())
-    .then(movie => {
+  fetch(API_URL + '/' + movieId)
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(movie) {
       document.getElementById('buy-ticket').textContent = 'Buy Ticket';
       displayFilmDetails(movie);
     });
@@ -53,62 +61,67 @@ function displayFilmDetails(selectedMovie) {
   const posterElement = document.getElementById('poster');
   posterElement.src = selectedMovie.poster;
 
-  document.querySelector('#title').textContent = selectedMovie.title;
-
-  document.querySelector('#runtime').textContent = `${selectedMovie.runtime} minutes`;
-
-  document.querySelector('#film-info').textContent = selectedMovie.description;
-
-  document.querySelector('#showtime').textContent = selectedMovie.showtime;
+  document.getElementById('title').textContent = selectedMovie.title;
+  document.getElementById('runtime').textContent = selectedMovie.runtime + ' minutes';
+  document.getElementById('film-info').textContent = selectedMovie.description;
+  document.getElementById('showtime').textContent = selectedMovie.showtime;
 
   const availableTickets = selectedMovie.capacity - selectedMovie.tickets_sold;
-  const ticketsElement = document.querySelector('#ticket-num');
+  const ticketsElement = document.getElementById('ticket-num');
   ticketsElement.textContent = availableTickets;
 
   const buyButton = document.getElementById('buy-ticket');
-  buyButton.removeEventListener('click', buyTicketHandler); // Remove previous listener
+  buyButton.removeEventListener('click', buyTicketHandler);
   if (availableTickets === 0) {
     buyButton.textContent = 'Sold Out';
   } else {
-    buyButton.addEventListener('click', () => buyTicketHandler(selectedMovie));
+    buyButton.addEventListener('click', function() {
+      buyTicketHandler(selectedMovie);
+    });
   }
 }
 
 function buyTicketHandler(movie) {
-  const ticketsElement = document.querySelector('#ticket-num');
-  let remainingTickets = parseInt(ticketsElement.textContent, 10);
+  const ticketsElement = document.getElementById('ticket-num');
+  let remainingTickets = parseInt(ticketsElement.textContent);
 
   if (remainingTickets > 0) {
-    remainingTickets -= 1;
+    remainingTickets--;
     ticketsElement.textContent = remainingTickets;
 
     const updatedTicketsSold = movie.tickets_sold + 1;
 
-    fetch(`${API_URL}/${movie.id}`, {
+    fetch(API_URL + '/' + movie.id, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ tickets_sold: updatedTicketsSold })
     })
-      .then(response => response.json())
-      .then(updatedMovie => {
-        displayFilmDetails(updatedMovie);
-        if (remainingTickets === 0) {
-          document.getElementById('buy-ticket').textContent = 'Sold Out';
-        }
-      });
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(updatedMovie) {
+      displayFilmDetails(updatedMovie);
+      if (remainingTickets === 0) {
+        document.getElementById('buy-ticket').textContent = 'Sold Out';
+      }
+    });
   } else {
     alert('Sorry, no more tickets available!');
   }
 }
-fetch(`${API_URL}/${movieId}`, {  // Removed the comma after movieId
-  method: 'DELETE'
-})
-.then(() => {
-  filmsList.removeChild(filmItem);
-})
-.catch(error => console.error('Error:', error));  // Optional: catch block for error handling
+
+function deleteMovie(movieId, filmItem) {
+  fetch(`${API_URL}/${movieId}`, { 
+    method: 'DELETE'
+  })
+  .then(() => {
+    filmsList.removeChild(filmItem);
+  });
+}
+
+
 
 
 
