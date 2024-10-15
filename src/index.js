@@ -102,7 +102,14 @@ function buyTicketHandler(movie) {
     alert('Sorry, no more tickets available!');
   }
 }
-
+function deleteMovie(movieId, filmItem) {
+  fetch(`${API_URL}/${movieId},` { 
+    method: 'DELETE'
+  })
+  .then(() => {
+    filmsList.removeChild(filmItem);
+  });
+}
 
 
 
