@@ -102,14 +102,14 @@ function buyTicketHandler(movie) {
     alert('Sorry, no more tickets available!');
   }
 }
-function deleteMovie(movieId, filmItem) {
-  fetch(`${API_URL}/${movieId},` { 
-    method: 'DELETE'
-  })
-  .then(() => {
-    filmsList.removeChild(filmItem);
-  });
-}
+fetch(`${API_URL}/${movieId}`, {  // Removed the comma after movieId
+  method: 'DELETE'
+})
+.then(() => {
+  filmsList.removeChild(filmItem);
+})
+.catch(error => console.error('Error:', error));  // Optional: catch block for error handling
+
 
 
 
